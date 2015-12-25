@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .canvas {
+            padding: 0;
+            margin: auto;
+            display: block;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas" width="500" height="500" class="canvas">
+    Your browser does not support the HTML5 canvas tag.</canvas>
+
+<div id="hour">
+
+</div>
+
+<script>
+
+
+    var round = function roundCreator(canvasName) {
+        var c=document.getElementById(canvasName);
+        var ctx=c.getContext("2d");
+
+        var maxRadius = c.width/2;
+        var centerx = maxRadius;
+        var centery = maxRadius;
+
+        var getCurrentLine = function(angle, radius) {
+            var radians = angle * Math.PI / 180;
+            return {
+                startx: centerx,
+                starty: centery,
+                endx: centerx + radius * Math.cos(radians),
+                endy: centery + radius * Math.sin(radians)
+            };
+        };
+
+        var drawLine = function(coords, color, width) {
+            ctx.beginPath();
+            ctx.moveTo(coords.startx,coords.starty);
+            ctx.lineTo(coords.endx,coords.endy);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+        };
+
+        var setMinuteIndicatorLine = function(angle) {
+            angle = angle * Math.PI / 180;
+            startx = centerx + maxRadius * 0.98 * Math.cos(angle);
+            starty = centerx + maxRadius * 0.98 * Math.sin(angle);
+            endx = centerx + maxRadius*0.94 * Math.cos(angle);
+            endy = centery + maxRadius*0.94 * Math.sin(angle);
+            ctx.beginPath();
+            ctx.moveTo(startx,starty);
+            ctx.lineTo(endx,endy);
+            ctx.stroke();
+        };
+
+        var setHourIndicatorLine = function() {
+            for (i=0; i<12; i++) {
+                var angle = (-90 + 30 * i) * Math.PI / 180;
+                startx = centerx + maxRadius * 0.98 * Math.cos(angle);
+                starty = centerx + maxRadius * 0.98 * Math.sin(angle);
+                endx = centerx + maxRadius * 0.88 * Math.cos(angle);
+                endy = centery + maxRadius * 0.88 * Math.sin(angle);
+                ctx.beginPath();
+                ctx.moveTo(startx, starty);
+                ctx.lineTo(endx, endy);
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+        };
+
+        var clear = function() {
+            ctx.clearRect(0, 0, c.width, c.height);
+            ctx.beginPath();
+            ctx.arc(centerx,centery,maxRadius,0,2*Math.PI);
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            for (var i=0; i<60; i++) { setMinuteIndicatorLine(6*i)}
+            setHourIndicatorLine();
+        };
+
+        var drawSecond = function(angle) {
+            var coords = getCurrentLine(angle, maxRadius*0.88);
+            coords2 = getCurrentLine(angle+180, maxRadius*0.20);
+            coords3 = getCurrentLine(angle, maxRadius*0.8);
+            ctx.beginPath();
+            ctx.arc(coords3.endx, coords3.endy, 5, 0, 2*Math.PI);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'red';
+            ctx.fillStyle = 'red';
+            ctx.fill();
+            ctx.stroke();
+            console.log(JSON.stringify(angle+180));
+            console.log(JSON.stringify(angle));
+            drawLine(coords, 'red', 1);
+            drawLine(coords2, 'red', 1);
+        };
+
+        var drawMinute = function(angle) {
+            var coords = getCurrentLine(angle, maxRadius*0.8);
+            var coords2 = getCurrentLine(angle+180, maxRadius*0.1);
+            drawLine(coords, 'black', 8);
+            drawLine(coords2, 'black', 8);
+        };
+
+        var drawHour = function(angle) {
+            var coords = getCurrentLine(angle, maxRadius*0.5);
+            var coords2 = getCurrentLine(angle+180, maxRadius*0.1);
+            drawLine(coords, 'black', 8);
+            drawLine(coords2, 'black', 8);
+        };
+
+
+
+        return {
+            draw: function(current, ttl) {
+                var second = current.getSeconds();
+                var minute = current.getMinutes();
+                var hour = current.getHours();
+                clear();
+                drawSecond(-90 + 6 * second);
+                drawMinute(-90 + 6 * minute + 0.1 * second);
+                drawHour(-90 + 30 * hour + 0.5 * minute);
+                document.getElementById('hour').innerHTML  = ttl;
+            }
+        };
+    }('canvas');
+
+    var ttl = 0;
+
+    var currentTime = function() {
+        var date = new Date();
+        round.draw(date, ttl);
+        ttl++;
+    };
+
+    setInterval(currentTime, 1000);
+
+
+</script>
+
+</body>
+</html>
